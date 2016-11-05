@@ -1,0 +1,85 @@
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+# Print the IP address
+_IP=$(hostname -I) || true
+if [ "$_IP" ]; then
+  printf "My IP address is %s\n" "$_IP"
+fi
+
+
+midiEtherSwitch(){
+  ethOn=0 
+  #0 pin grounded by jumper
+  ethOff=1
+  #1 jumper removed
+  while true ; do
+    while [ $(gpio -g read $ethPin) -eq $ethOff ] ; do
+       echo Midi $(date)
+       sleep 2
+    done
+    /sbin/modprobe -r g_midi
+    /sbin/modprobe g_ether
+    while [ $(gpio -g read $ethPin) -eq $ethOn ] ; do
+      echo Ethernet $(date)
+      sleep 2
+    done
+    /sbin/modprobe -r g_ether
+    /sbin/modprobe g_midi
+  done
+}
+
+poweroffGpio(){
+  while [ $(gpio -g read $poweroffPin) -eq 1 ]; do
+    sleep 5
+  done
+  /sbin/poweroff
+}
+
+poweroffPin=4
+gpio -g mode $poweroffPin in
+gpio -g mode $poweroffPin up
+
+ethPin=17
+gpio -g mode $ethPin in 
+gpio -g mode $ethPin up
+
+midiEtherSwitch &
+
+poweroffGpio &
+
+exit 0
+
+# play midi to usb gadget
+# pmidi <filename> -p 20:0
+# pmidi -l to list ports
+
+# recieve midi and dump to screen
+# amidi -d
+# amidi -l to list ports
+# use a specific port:-
+# amidi --port=hw:0 -d
+
+# example setup ip forwarding from usb gadget
+# on host:
+#
+# echo "1" > /proc/sys/net/ipv4/ip_forward
+# iptables -t nat -A POSTROUTING -o wlan0 -j MASQUERADE
+#
+# on gadget:
+# route add default gw 169.254.233.54
+#    <<or other usb host ip
+# sudo nano /etc/resolv.conf
+# append>> nameserver 192.168.0.222
+#    <<or other dns server ip
+
