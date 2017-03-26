@@ -60,6 +60,17 @@ poweroffGpio &
 
 exit 0
 
+# modules setup to enable midi gadget or usb ethernet mdoes
+# in /boot/cmdline.txt, add  modules-load=dwc2,g_midi
+# e.g. dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait modules-load=dwc2,g_midi
+# in /boot/config.txt, add dtoverlay=dwc2
+# e.g. lines below, between #start and #end : snip off "#> " prefixes
+#start
+#>  # Uncomment this to enable the lirc-rpi module
+#>  #dtoverlay=lirc-rpi
+#>  dtoverlay=dwc2
+#end
+
 # play midi to usb gadget
 # pmidi <filename> -p 20:0
 # pmidi -l to list ports
